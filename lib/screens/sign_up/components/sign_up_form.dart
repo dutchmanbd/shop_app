@@ -1,22 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:shop_app/components/custom_svg_icon.dart';
 import 'package:shop_app/components/default_button.dart';
-import 'package:shop_app/screens/forgot_password/forgot_password_screen.dart';
-import 'package:shop_app/screens/login_success/login_success_screen.dart';
+import 'package:shop_app/components/form_error.dart';
+import 'package:shop_app/screens/complete_profile/complete_profile_screen.dart';
 
 import '../../../constants.dart';
 import '../../../size_config.dart';
-import '../../../components/custom_svg_icon.dart';
-import '../../../components/form_error.dart';
 
-class SignForm extends StatefulWidget {
+class SignUpForm extends StatefulWidget {
   @override
-  _SignFormState createState() => _SignFormState();
+  _SignUpFormState createState() => _SignUpFormState();
 }
 
-class _SignFormState extends State<SignForm> {
+class _SignUpFormState extends State<SignUpForm> {
   final _formKey = GlobalKey<FormState>();
-  String email, password;
-  bool remember = false;
+  String email;
+  String password;
+  String confirmPassword;
+
   final List<String> errors = [];
 
   void addError({String error}) {
@@ -45,42 +46,49 @@ class _SignFormState extends State<SignForm> {
           SizedBox(height: getProportionateScreenHeight(30)),
           buildPasswordFormField(),
           SizedBox(height: getProportionateScreenHeight(30)),
-          Row(
-            children: [
-              Checkbox(
-                value: remember,
-                activeColor: kPrimaryColor,
-                onChanged: (value) {
-                  setState(() {
-                    remember = value;
-                  });
-                },
-              ),
-              Text('Remember Me'),
-              Spacer(),
-              GestureDetector(
-                onTap: () => Navigator.popAndPushNamed(
-                    context, ForgotPasswordScreen.routeName),
-                child: Text(
-                  'Forgot Password',
-                  style: TextStyle(decoration: TextDecoration.underline),
-                ),
-              )
-            ],
-          ),
+          buildConfirmPasswordFormField(),
           FormError(errors: errors),
-          SizedBox(height: getProportionateScreenHeight(30)),
+          SizedBox(height: getProportionateScreenHeight(40)),
           DefaultButton(
-            text: "Sign In",
+            text: 'Continue',
             press: () {
               if (_formKey.currentState.validate()) {
-                _formKey.currentState.save();
-                // if all are valid then go to success screen
-                Navigator.pushNamed(context, LoginSuccessScreen.routeName);
+                // Go to complete profile page
+                Navigator.pushNamed(context, CompleteProfileScreen.routeName);
               }
             },
-          )
+          ),
         ],
+      ),
+    );
+  }
+
+  TextFormField buildConfirmPasswordFormField() {
+    return TextFormField(
+      obscureText: true,
+      keyboardType: TextInputType.emailAddress,
+      onSaved: (newValue) => confirmPassword = newValue,
+      onChanged: (value) {
+        if (password == confirmPassword) {
+          removeError(error: ERROR_PASSWORD_MISMATCH);
+        }
+      },
+      validator: (value) {
+        if (value.isEmpty) {
+          return "";
+        } else if (password != value) {
+          addError(error: ERROR_PASSWORD_MISMATCH);
+          return "";
+        }
+        return null;
+      },
+      decoration: InputDecoration(
+        hintText: "Re-enter your password",
+        labelText: "Confirm Password",
+        floatingLabelBehavior: FloatingLabelBehavior.always,
+        suffixIcon: CustomSuffixIcon(
+          svgIcon: "assets/icons/Lock.svg",
+        ),
       ),
     );
   }
@@ -96,6 +104,7 @@ class _SignFormState extends State<SignForm> {
         } else if (value.length >= 4) {
           removeError(error: ERROR_SHORT_PASSWORD);
         }
+        password = value;
       },
       validator: (value) {
         if (value.isEmpty) {
